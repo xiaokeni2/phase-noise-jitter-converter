@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d1117">
+<title>Phase Noise to RMS Jitter Calculator | Oscillator Tool</title>
+<meta name="description" content="Phase noise to jitter converter: free online RMS jitter calculator for OCXO, TCXO and crystal oscillators. Integrate L(f) in dBc/Hz to get RMS jitter (s, ps) and RMS phase noise (rad, deg).">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Phase Noise to RMS Jitter Calculator",
+  "url": "https://xiaokeni2.github.io/phase-noise-jitter-converter/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "description": "Convert single-sideband phase noise L(f) in dBc/Hz into integrated RMS jitter and RMS phase noise for OCXO, TCXO and crystal oscillators.",
+  "publisher": { "@type": "Organization", "name": "BRIDZA", "url": "https://rf.bridza.com" }
+}
+</script>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.55;
+}
+main { max-width: 780px; margin: 0 auto; padding: 28px 16px 40px; }
+h1 { font-size: 1.45rem; margin: 0 0 6px; color: #f0f6fc; }
+.sub { color: #8b949e; margin: 0 0 22px; font-size: .95rem; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px; margin: 0 0 14px; }
+h2 { font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; color: #58a6ff; margin: 0 0 10px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.to { color: #8b949e; }
+input, select {
+  background: #0d1117; border: 1px solid #30363d; color: #e6edf3;
+  border-radius: 6px; padding: 9px 10px; font-size: 1rem;
+}
+input:focus, select:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 2px rgba(88,166,255,.25); }
+input[type="number"] {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  flex: 1 1 120px; min-width: 0;
+}
+select { flex: 0 0 auto; }
+.hint { color: #8b949e; font-size: .82rem; margin: 8px 0 0; }
+.formula {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  color: #79c0ff; font-size: .95rem; margin: 0 0 6px; overflow-wrap: anywhere;
+}
+.pnrow { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin: 0 0 8px; }
+.pnrow input { width: 100%; flex: none; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button {
+  background: #21262d; border: 1px solid #30363d; color: #e6edf3;
+  border-radius: 6px; padding: 9px 14px; font-size: .9rem; cursor: pointer;
+}
+button:hover { border-color: #8b949e; }
+button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; font-weight: 600; }
+button.primary:hover { background: #388bfd; }
+button.del { padding: 9px 0; color: #f85149; }
+.msg { font-size: .85rem; margin: 10px 0 0; min-height: 1.2em; color: #8b949e; }
+.msg.err { color: #f85149; }
+.msg.ok { color: #3fb950; }
+.results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.metric { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
+.label { color: #8b949e; font-size: .78rem; margin-bottom: 4px; }
+.value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-variant-numeric: tabular-nums; color: #58a6ff; font-size: 1.12rem;
+  overflow-wrap: anywhere;
+}
+.value.small { font-size: .92rem; color: #79c0ff; margin-top: 2px; }
+.note { color: #8b949e; font-size: .85rem; margin: 6px 0 0; }
+footer { border-top: 1px solid #30363d; margin-top: 28px; padding: 18px 16px 30px; text-align: center; font-size: .9rem; }
+footer p { margin: 0; }
+footer a { color: #58a6ff; text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+@media (max-width: 560px) {
+  .results-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 1.25rem; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Phase Noise to RMS Jitter Calculator</h1>
+  <p class="sub">Phase noise to jitter conversion for OCXO, TCXO and crystal oscillators — integrate L(f) in dBc/Hz into RMS jitter and RMS phase noise. Runs entirely in your browser.</p>
+
+  <section class="card">
+    <h2>Method</h2>
+    <p class="formula">RMS jitter = &radic;( 2 &middot; &int;<sub>f1</sub><sup>f2</sup> 10<sup>L(f)/10</sup> df ) / (2&pi;&middot;f&#8320;)</p>
+    <p class="hint">L(f) is piecewise-linearly interpolated on a logarithmic frequency axis between your entered points; outside the table, the nearest-segment slope is extrapolated. Integrated RMS phase noise = 2&pi;&middot;f&#8320;&middot;jitter (rad).</p>
+  </section>
+
+  <section class="card">
+    <h2>Carrier frequency f&#8320;</h2>
+    <div class="row">
+      <input id="f0" type="number" min="0" step="any" value="10" aria-label="Carrier frequency value">
+      <select id="f0unit" aria-label="Carrier frequency unit">
+        <option value="1">Hz</option>
+        <option value="1000">kHz</option>
+        <option value="1000000" selected>MHz</option>
+        <option value="1000000000">GHz</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Integration range f1 &ndash; f2</h2>
+    <div class="row">
+      <input id="f1" type="number" min="0" step="any" value="12" aria-label="Lower integration limit">
+      <select id="f1unit" aria-label="Lower limit unit">
+        <option value="1" selected>Hz</option>
+        <option value="1000">kHz</option>
+        <option value="1000000">MHz</option>
+      </select>
+      <span class="to">to</span>
+      <input id="f2" type="number" min="0" step="any" value="1" aria-label="Upper integration limit">
+      <select id="f2unit" aria-label="Upper limit unit">
+        <option value="1">Hz</option>
+        <option value="1000">kHz</option>
+        <option value="1000000" selected>MHz</option>
+      </select>
+    </div>
+    <p class="hint">Default 12 Hz &ndash; 1 MHz: the typical integration bandwidth for OCXO evaluation.</p>
+  </section>
+
+  <section class="card">
+    <h2>Phase noise L(f)</h2>
+    <p class="hint">Offset frequency in Hz &middot; single-sideband phase noise in dBc/Hz.</p>
+    <div id="rows"></div>
+    <div class="btns">
+      <button type="button" id="addrow">+ Add row</button>
+      <button type="button" id="example">Load 10 MHz OCXO example</button>
+      <button type="button" id="clear">Clear</button>
+      <button type="button" id="calc" class="primary">Calculate</button>
+    </div>
+    <p id="msg" class="msg"></p>
+  </section>
+
+  <section class="card">
+    <h2>Results</h2>
+    <div class="results-grid">
+      <div class="metric">
+        <div class="label">RMS jitter</div>
+        <div class="value" id="rjitter">&mdash;</div>
+        <div class="value small" id="rjitter2">&mdash;</div>
+      </div>
+      <div class="metric">
+        <div class="label">RMS phase noise (integrated)</div>
+        <div class="value" id="rrad">&mdash;</div>
+        <div class="value small" id="rdeg">&mdash;</div>
+      </div>
+      <div class="metric">
+        <div class="label">&int; 10<sup>L(f)/10</sup> df</div>
+        <div class="value small" id="rint">&mdash;</div>
+      </div>
+      <div class="metric">
+        <div class="label">Settings used</div>
+        <div class="value small" id="rset">&mdash;</div>
+      </div>
+    </div>
+  </section>
+
+  <p class="note">Results differ when the integration range or the carrier frequency differs &mdash; always set both to match your actual system.</p>
+</main>
+<footer>
+  <p>More RF tools: <a href="https://rf.bridza.com/">BRIDZA RF Component Selector</a> &middot; <a href="https://xiaokeni2.github.io/rf-component-selector/">OCXO / TCXO Parametric Search</a></p>
+</footer>
+<script>
+(function () {
+  'use strict';
+  var rowsEl = document.getElementById('rows');
+  var msgEl = document.getElementById('msg');
+  var EXAMPLE = [[12, -100], [100, -135], [1000, -155], [10000, -165], [100000, -170]];
+
+  function addRow(f, l) {
+    var div = document.createElement('div');
+    div.className = 'pnrow';
+    var i1 = document.createElement('input');
+    i1.type = 'number'; i1.step = 'any'; i1.min = '0';
+    i1.className = 'off'; i1.placeholder = 'Offset f (Hz)';
+    i1.setAttribute('aria-label', 'Offset frequency in Hz');
+    var i2 = document.createElement('input');
+    i2.type = 'number'; i2.step = 'any';
+    i2.className = 'lvl'; i2.placeholder = 'L(f) dBc/Hz';
+    i2.setAttribute('aria-label', 'Phase noise level in dBc/Hz');
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'del'; b.textContent = '\u2715';
+    b.title = 'Remove row'; b.setAttribute('aria-label', 'Remove row');
+    b.addEventListener('click', function () { div.remove(); });
+    if (f !== undefined) i1.value = f;
+    if (l !== undefined) i2.value = l;
+    div.appendChild(i1); div.appendChild(i2); div.appendChild(b);
+    rowsEl.appendChild(div);
+  }
+
+  function readRows() {
+    var pts = [], invalid = 0;
+    var rows = rowsEl.querySelectorAll('.pnrow');
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var fv = r.querySelector('.off').value.trim();
+      var lv = r.querySelector('.lvl').value.trim();
+      if (fv === '' && lv === '') continue;
+      var f = parseFloat(fv), L = parseFloat(lv);
+      if (!isFinite(f) || !isFinite(L) || f <= 0) { invalid++; continue; }
+      pts.push({ f: f, L: L });
+    }
+    pts.sort(function (a, b) { return a.f - b.f; });
+    var out = [];
+    for (var j = 0; j < pts.length; j++) {
+      var last = out[out.length - 1];
+      if (last && last.f === pts[j].f) last.L = pts[j].L;
+      else out.push(pts[j]);
+    }
+    return { pts: out, invalid: invalid };
+  }
+
+  function lAt(f, pts) {
+    var n = pts.length;
+    if (n === 1) return pts[0].L;
+    var i, s;
+    if (f <= pts[0].f) {
+      s = (pts[1].L - pts[0].L) / (Math.log10(pts[1].f) - Math.log10(pts[0].f));
+      return pts[0].L + s * (Math.log10(f) - Math.log10(pts[0].f));
+    }
+    if (f >= pts[n - 1].f) {
+      s = (pts[n - 1].L - pts[n - 2].L) / (Math.log10(pts[n - 1].f) - Math.log10(pts[n - 2].f));
+      return pts[n - 1].L + s * (Math.log10(f) - Math.log10(pts[n - 1].f));
+    }
+    for (i = 0; i < n - 1; i++) {
+      if (f >= pts[i].f && f <= pts[i + 1].f) {
+        var t = (Math.log10(f) - Math.log10(pts[i].f)) / (Math.log10(pts[i + 1].f) - Math.log10(pts[i].f));
+        return pts[i].L + t * (pts[i + 1].L - pts[i].L);
+      }
+    }
+    return pts[n - 1].L;
+  }
+
+  function integrate(pts, f1, f2) {
+    var bp = [f1], i, total = 0, extrap = false;
+    for (i = 0; i < pts.length; i++) {
+      if (pts[i].f > f1 && pts[i].f < f2) bp.push(pts[i].f);
+    }
+    bp.push(f2);
+    if (f1 < pts[0].f || f2 > pts[pts.length - 1].f) extrap = true;
+    for (i = 0; i < bp.length - 1; i++) {
+      var a = bp[i], b = bp[i + 1];
+      if (b <= a) continue;
+      var La = lAt(a, pts), Lb = lAt(b, pts);
+      var slope = (Lb - La) / (Math.log10(b / a));
+      var beta = slope / 10;
+      var Sa = Math.pow(10, La / 10);
+      var seg;
+      if (Math.abs(beta + 1) < 1e-12) seg = Sa * a * Math.log(b / a);
+      else seg = Sa * a * (Math.pow(b / a, beta + 1) - 1) / (beta + 1);
+      total += seg;
+    }
+    return { total: total, extrap: extrap };
+  }
+
+  function trimNum(x) {
+    if (x !== 0 && Math.abs(x) < 1e-4) return x.toExponential(3);
+    return (Math.round(x * 1000) / 1000).toString();
+  }
+  function fmtHz(f) {
+    if (f >= 1e9) return trimNum(f / 1e9) + ' GHz';
+    if (f >= 1e6) return trimNum(f / 1e6) + ' MHz';
+    if (f >= 1e3) return trimNum(f / 1e3) + ' kHz';
+    return trimNum(f) + ' Hz';
+  }
+
+  function err(m) { msgEl.textContent = m; msgEl.className = 'msg err'; }
+
+  function calculate() {
+    msgEl.textContent = ''; msgEl.className = 'msg';
+    var f0 = parseFloat(document.getElementById('f0').value) * parseFloat(document.getElementById('f0unit').value);
+    var f1 = parseFloat(document.getElementById('f1').value) * parseFloat(document.getElementById('f1unit').value);
+    var f2 = parseFloat(document.getElementById('f2').value) * parseFloat(document.getElementById('f2unit').value);
+    if (!isFinite(f0) || f0 <= 0) { err('Enter a positive carrier frequency f0.'); return; }
+    if (!isFinite(f1) || !isFinite(f2) || f1 <= 0 || f2 <= 0) { err('Integration limits must be positive.'); return; }
+    if (f1 >= f2) { err('Lower integration limit must be below the upper limit.'); return; }
+    var data = readRows();
+    if (data.pts.length === 0) { err('Enter at least one valid phase noise point (offset frequency > 0).'); return; }
+    if (data.invalid > 0) msgEl.textContent = data.invalid + ' invalid row(s) ignored. ';
+    var res = integrate(data.pts, f1, f2);
+    var rad = Math.sqrt(2 * res.total);
+    var jit = rad / (2 * Math.PI * f0);
+    document.getElementById('rjitter').textContent = jit.toExponential(4) + ' s';
+    document.getElementById('rjitter2').textContent = (jit * 1e12).toPrecision(4) + ' ps';
+    document.getElementById('rrad').textContent = rad.toExponential(4) + ' rad';
+    document.getElementById('rdeg').textContent = (rad * 180 / Math.PI).toPrecision(4) + ' deg';
+    document.getElementById('rint').textContent = res.total.toExponential(4) + ' rad\u00B2';
+    document.getElementById('rset').textContent = 'f0 = ' + fmtHz(f0) + ' \u00B7 integration ' + fmtHz(f1) + ' to ' + fmtHz(f2);
+    if (res.extrap) msgEl.textContent += 'Note: the integration range extends beyond the entered offset data; the nearest-segment slope is used for extrapolation.';
+    else if (!msgEl.textContent) msgEl.textContent = 'OK';
+    msgEl.className = 'msg ok';
+  }
+
+  function loadExample() {
+    document.getElementById('f0').value = '10';
+    document.getElementById('f0unit').value = '1000000';
+    document.getElementById('f1').value = '12';
+    document.getElementById('f1unit').value = '1';
+    document.getElementById('f2').value = '1';
+    document.getElementById('f2unit').value = '1000000';
+    rowsEl.innerHTML = '';
+    for (var i = 0; i < EXAMPLE.length; i++) addRow(EXAMPLE[i][0], EXAMPLE[i][1]);
+  }
+
+  document.getElementById('addrow').addEventListener('click', function () { addRow(); });
+  document.getElementById('example').addEventListener('click', function () { loadExample(); calculate(); });
+  document.getElementById('clear').addEventListener('click', function () { rowsEl.innerHTML = ''; addRow(); addRow(); addRow(); });
+  document.getElementById('calc').addEventListener('click', calculate);
+
+  loadExample();
+  calculate();
+})();
+</script>
+</body>
+</html>
